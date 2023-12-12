@@ -1,7 +1,7 @@
 #!/bin/bash
 
 python vae_train.py\
-    --exp=test_UBC_vae\
+    --exp=test_EC_UBC_vae\
     --dataset=UBC\
     --category=wood\
     --lr=1e-4\
