@@ -141,10 +141,10 @@ def test(args):
 
             
 
-        rec_loss.append(torch.mean(torch.from_numpy(amaps)))     
+        rec_loss.append(torch.median(torch.from_numpy(amaps)))     
 
         
-
+        print(float("{:.2f}".format(rec_loss[-1])))
         m_rec = np.mean(rec_loss)
         print(m_rec)
         pbar.set_description(f"mean Reconstruction loss: {m_rec:.3f}")

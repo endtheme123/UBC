@@ -94,7 +94,7 @@ class UBC(nn.Module):
         x = self.final_encoder(x)
         x_glb = self.glb_conv_encoder(x_glb)
         x_glb = self.glb_final_encoder(x_glb)
-        return 0.75*x[:, :self.z_dim] + 0.25*x_glb[:, :self.z_dim], 0.75*x[:, self.z_dim:] + 0.25*x_glb[:, self.z_dim:]
+        return 0.005*x[:, :self.z_dim] + 0.995*x_glb[:, :self.z_dim], 0.005*x[:, self.z_dim:] + 0.995*x_glb[:, self.z_dim:]
 
     def reparameterize(self, mu, logvar):
         if self.training:

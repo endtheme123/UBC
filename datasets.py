@@ -298,7 +298,7 @@ class UBCTestDataset(Dataset):
         else:
             self.img_dir = UNDEFINE
         self.img_files = list(
-                            np.random.choice( list(itertools.chain.from_iterable([[os.path.join(img_fol, img)
+                            np.random.choice(list(itertools.chain.from_iterable([[os.path.join(img_fol, img)
                             for img in os.listdir(img_fol)  
                             if (os.path.isfile(os.path.join(img_fol, img))
                             and img.endswith('.png') and "_" in img
@@ -306,7 +306,7 @@ class UBCTestDataset(Dataset):
                                               "global_images", 
                                               img.split("_")[0]+"_global.png")))] for img_fol in self.img_fol_dir])),
                             size=fake_dataset_size)
-                            )
+        )
         self.fake_dataset_size = fake_dataset_size # needed otherwise there are
         self.global_img_files = [os.path.join(os.path.abspath(os.path.join(s, "../../../..")), "global_images", os.path.basename(s).split("_")[0]+"_global.png") for s in self.img_files]
 
