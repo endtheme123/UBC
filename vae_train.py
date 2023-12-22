@@ -157,11 +157,12 @@ def main(args):
                 epoch=epoch)
             
             if(args.intest):
+                model.eval()
                 m_auc = test_on_train(args, model)
                 test_aucroc_dict['aucroc']=m_auc
                 print('epoch [{}/{}], train loss: {:.4f}'.format(
                     epoch + 1, args.num_epochs, loss))
-
+                model.train()
             # print loss logs
             f_name = os.path.join(out_dir, f"{args.exp}_loss_values.txt")
             print_loss_logs(f_name, out_dir, loss_dict, epoch, args.exp)

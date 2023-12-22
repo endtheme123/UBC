@@ -139,6 +139,22 @@ def test(args):
         amaps = ((ssim_map - np.amin(ssim_map)) / (np.amax(ssim_map)
         - np.amin(ssim_map)))
 
+        x_rec, _ = model(imgs_loc, imgs_glo)
+        x_rec = model.mean_from_lambda(x_rec)
+
+        mad = torch.mean(torch.abs(model.mu - torch.mean(model.mu,
+            dim=(0,1))), dim=(0,1))
+
+        mad = mad.detach().cpu().numpy()
+
+        mad = ((mad - np.amin(mad)) / (np.amax(mad)
+            - np.amin(mad)))
+
+        mad = mad.repeat(8, axis=0).repeat(8, axis=1)
+
+        # MAD metric
+        amaps = mad
+            
             
 
         rec_loss.append(torch.median(torch.from_numpy(amaps)))     
@@ -146,7 +162,9 @@ def test(args):
         
         print(float("{:.2f}".format(rec_loss[-1])))
         m_rec = np.mean(rec_loss)
+        max_rec = np.max(rec_loss)
         print(m_rec)
+        print(max_rec)
         pbar.set_description(f"mean Reconstruction loss: {m_rec:.3f}")
 
         ori = imgs_loc[0].permute(1, 2, 0).cpu().numpy()
@@ -239,7 +257,7 @@ def test_on_train(args, model):
         
         amaps = ((ssim_map - np.amin(ssim_map)) / (np.amax(ssim_map)
         - np.amin(ssim_map)))
-        rec_loss.append(torch.mean(torch.from_numpy(amaps)))  
+        rec_loss.append(torch.median(torch.from_numpy(amaps)))  
         m_rec_loss = np.mean(rec_loss)
         print(m_rec_loss)
         pbar.set_description(f"mean rec loss: {m_rec_loss:.3f}")

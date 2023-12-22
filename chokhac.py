@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from torch import nn
 from torchvision.models.resnet import resnet18
+from torchvision import transforms
 import copy 
 
 class UBC(nn.Module):
@@ -18,11 +19,24 @@ class UBC(nn.Module):
         self.beta = beta
         self.rec_loss = rec_loss
         self.delta = delta
-        self.nb_conv = int(np.log2(img_size // latent_img_size))
+        self.nb_conv = 3
         # the depth we will have at the end of the encoder given that a
         # convolution incease depth by 2 starting at 32 after the first
         self.max_depth_conv = 2 ** (4 + self.nb_conv)
+        self.dino = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14')
+        for param in self.dino.parameters():
+            param.requires_grad = False
+
+        # self.dino.norm = nn.Identity()
+        # self.dino.head = nn.Identity()
         
+        # self.dino_export_loc = nn.Sequential(
+        #     nn.Conv2d(384,384, 4, 2, 0),
+            
+        #     nn.ReLU()
+            
+        # )
+        # self.dino_export_glo = copy.deepcopy(self.dino_export_loc)
         self.resnet = resnet18(pretrained=False)
         self.resnet_entry = nn.Sequential(
             nn.Conv2d(self.nb_channels, 64, kernel_size=7,
@@ -57,72 +71,118 @@ class UBC(nn.Module):
             stride=1, padding=0)
         )
 
-        self.glb_conv_encoder = copy.deepcopy(self.conv_encoder)
-        self.glb_final_encoder = copy.deepcopy(self.final_encoder)
+        # self.glb_conv_encoder = copy.deepcopy(self.conv_encoder)
+        # self.glb_final_encoder = copy.deepcopy(self.final_encoder)
 
-        self.initial_decoder = nn.Sequential(
-            nn.ConvTranspose2d(self.z_dim, self.max_depth_conv,
-                kernel_size=1, stride=1, padding=0),
-            nn.BatchNorm2d(self.max_depth_conv),
-            nn.ReLU()
-        )
+        # self.initial_decoder = nn.Sequential(
+        #     nn.ConvTranspose2d(self.z_dim, self.max_depth_conv,
+        #         kernel_size=1, stride=1, padding=0),
+        #     nn.BatchNorm2d(self.max_depth_conv),
+        #     nn.ReLU()
+        # )
             
         nb_conv_dec = self.nb_conv
 
         self.decoder_layers = []
-        for i in reversed(range(nb_conv_dec)):
-            depth_in = 2 ** (4 + i + 1)
-            depth_out = 2 ** (4 + i)
-            if i == 0:
-                depth_out = self.nb_channels
-                self.decoder_layers.append(nn.Sequential(
-                    nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1),
+        self.decoder_layers.append(nn.Sequential(
+                    nn.ConvTranspose2d(192, 96 , 7, 1, 0),
                 ))
-            else:
-                self.decoder_layers.append(nn.Sequential(
-                    nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1),
-                    nn.BatchNorm2d(depth_out),
+        self.decoder_layers.append(nn.Sequential(
+                    nn.ConvTranspose2d(96, 48, 4, 2, 1),
+                    nn.BatchNorm2d(48),
                     nn.ReLU()
                 ))
+        
+        self.decoder_layers.append(nn.Sequential(
+                    nn.ConvTranspose2d(48, 24, 4, 2, 1),
+                    nn.BatchNorm2d(24),
+                    nn.ReLU()
+                ))
+        
+        self.decoder_layers.append(nn.Sequential(
+                    nn.ConvTranspose2d(24, 12, 4, 2, 1),
+                    nn.BatchNorm2d(12),
+                    nn.ReLU()
+                ))
+        self.decoder_layers.append(nn.Sequential(
+                    nn.ConvTranspose2d(12, 6, 4, 2, 1),
+                    nn.BatchNorm2d(6),
+                    nn.ReLU()
+                ))
+        self.decoder_layers.append(nn.Sequential(
+                    nn.ConvTranspose2d(6, 3, 4, 2, 1),
+                    nn.BatchNorm2d(3),
+                    nn.ReLU()
+                ))
+        # for i in reversed(range(nb_conv_dec)):
+        #     depth_in = 2 ** (4 + i + 1)
+        #     depth_out = 2 ** (4 + i)
+        #     if i == 0:
+        #         depth_out = self.nb_channels
+        #         self.decoder_layers.append(nn.Sequential(
+        #             nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1),
+        #         ))
+        #     else:
+        #         self.decoder_layers.append(nn.Sequential(
+        #             nn.ConvTranspose2d(depth_in, depth_out, 4, 2, 1),
+        #             nn.BatchNorm2d(depth_out),
+        #             nn.ReLU()
+        #         ))
         self.conv_decoder = nn.Sequential(
             *self.decoder_layers
         )
 
 
     def encoder(self, x, x_glb):
-        x = self.conv_encoder(x)
-        x = self.final_encoder(x)
-        x_glb = self.glb_conv_encoder(x_glb)
-        x_glb = self.glb_final_encoder(x_glb)
-        return 0.005*x[:, :self.z_dim] + 0.995*x_glb[:, :self.z_dim], 0.005*x[:, self.z_dim:] + 0.995*x_glb[:, self.z_dim:]
+        x = self.dino(x)
+        print(x.shape)
+        # x = self.dino_export_loc(x)
+        # x = x.view(4, 384,14,14)
+        x_glb = self.dino(x_glb)
+        # x_glb = self.dino_export_glo(x_glb)
+        # x_glb = x_glb.view(4, 384,14,14)
+        return 0.75*x[:, :self.z_dim] + 0.25*x_glb[:, :self.z_dim], 0.75*x[:, self.z_dim:] + 0.25*x_glb[:, self.z_dim:]
 
     def reparameterize(self, mu, logvar):
         if self.training:
             std = torch.exp(torch.mul(logvar, 0.5))
             eps = torch.randn_like(std)
+            # print(mu.shape)
+            # print(logvar.shape)
             return eps * std + mu
         else:
             return mu
 
     def decoder(self, z):
-        z = self.initial_decoder(z)
+        # z = self.initial_decoder(z)
         x = self.conv_decoder(z)
         x = nn.Sigmoid()(x)
         return x
 
     def forward(self, x, x_glb):
         mu, logvar = self.encoder(x, x_glb)
+        # print(mu.shape)
+        
+        mu = torch.unsqueeze(mu, -1)
+        mu = torch.unsqueeze(mu, -1)
+        logvar = torch.unsqueeze(logvar, -1)
+        logvar = torch.unsqueeze(logvar, -1)
         
         z = self.reparameterize(mu, logvar)
+        # print(z.shape)
         
         self.mu = mu
-        print(mu.shape)
+        # print(mu.shape)
         self.logvar = logvar
+        # print(self.decoder(z).shape)
         return self.decoder(z), (mu, logvar)
 
     def xent_continuous_ber(self, recon_x, x, pixelwise=False):
         ''' p(x_i|z_i) a continuous bernoulli '''
         eps = 1e-6
+        print(recon_x.shape)
+        print(x.shape)
+        recon = transforms.Resize(size=(256, 256))
         def log_norm_const(x):
             # numerically stable computation
             x = torch.clamp(x, eps, 1 - eps)

@@ -13,7 +13,7 @@ import itertools
 DEFAULT_LIVESTOCK_DIR = "./data/livestock/part_III_cropped"
 DEFAULT_MVTEC_DIR = "E:/UnitWTF/lab ai/mvtec_anomaly_detection/wood"
 DEFAULT_MIAD_DIR = "E:/UnitWTF/dataset/photovoltaic_module"
-DEFAULT_UBC_DIR = "E:/UBC-OCEAN/train_images"
+DEFAULT_UBC_DIR = "F:/UBC-OCEAN/train_images"
 # Traning Dataset for livestock
 class LivestockTrainDataset(Dataset):
     def __init__(self, img_size, fake_dataset_size):
@@ -289,6 +289,51 @@ class MIADTrainDataset(Dataset):
 class UBCTestDataset(Dataset):
     def __init__(self, img_size, fake_dataset_size):
         if os.path.isdir(DEFAULT_UBC_DIR):
+            self.img_dir = os.path.join(DEFAULT_UBC_DIR, "HGSC")
+            
+            self.img_fol_dir =list(
+                            np.random.choice( list(os.path.join(self.img_dir, img_fol) for img_fol in os.listdir(self.img_dir)),
+                            size=47)
+                            )
+        else:
+            self.img_dir = UNDEFINE
+        self.img_files = list(
+                            np.random.choice(list(itertools.chain.from_iterable([[os.path.join(img_fol, img)
+                            for img in os.listdir(img_fol)  
+                            if (os.path.isfile(os.path.join(img_fol, img))
+                            and img.endswith('.png') and "_" in img
+                            and os.path.isfile(os.path.join(os.path.abspath(os.path.join(img_fol, "../../..")), 
+                                              "global_images", 
+                                              img.split("_")[0]+"_global.png")))] for img_fol in self.img_fol_dir])),
+                            size=fake_dataset_size)
+        )
+        self.fake_dataset_size = fake_dataset_size # needed otherwise there are
+        self.global_img_files = [os.path.join(os.path.abspath(os.path.join(s, "../../../..")), "global_images", os.path.basename(s).split("_")[0]+"_global.png") for s in self.img_files]
+
+        # self.gt_files = [s.replace(".png", "_mask.png").replace("test","ground_truth") for s in self.img_files]
+        self.transform = transforms.Compose([
+            transforms.Resize(size=(img_size, img_size)),
+            transforms.PILToTensor(),
+            transforms.Lambda(lambda img: img.float()),
+            transforms.Lambda(lambda img: img / 255.)
+        ]) 
+        self.nb_img = len(self.img_files) # recompute the size,
+        # fake_dataset_size may have changed it
+        self.nb_channels = 3
+
+    def __len__(self):
+        return len(self.img_files)
+
+    def __getitem__(self, index):
+        img_loc= Image.open(self.img_files[index])
+        img_glo = Image.open(self.global_img_files[index])
+        # gt = Image.open(self.gt_files[index])
+
+        return self.transform(img_loc), self.transform(img_glo), 0
+    
+class UBCTestPlotDataset(Dataset):
+    def __init__(self, img_size, fake_dataset_size):
+        if os.path.isdir(DEFAULT_UBC_DIR):
             self.img_dir = os.path.join(DEFAULT_UBC_DIR, "MC")
             
             self.img_fol_dir =list(
@@ -334,7 +379,7 @@ class UBCTestDataset(Dataset):
 class UBCTrainDataset(Dataset):
     def __init__(self, img_size, fake_dataset_size, all_in = False):
         if os.path.isdir(DEFAULT_UBC_DIR):
-            self.img_dir = os.path.join(DEFAULT_UBC_DIR, "HGSC")
+            self.img_dir = os.path.join(DEFAULT_UBC_DIR, "MC")
             self.img_fol_dir = list(
                             np.random.choice(list(os.path.join(self.img_dir, img_fol) for img_fol in os.listdir(self.img_dir)),
                             size=45)
