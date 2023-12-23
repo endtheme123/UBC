@@ -22,6 +22,7 @@ from utils import (get_train_dataloader,
                    load_vqvae,
                    parse_args
                    )
+import pandas as pd
 
 def ssim(a, b, win_size):
     "Structural di-SIMilarity: SSIM"
@@ -70,6 +71,7 @@ def create_segmentation(amaps, amaps2, rec_maps, dataset):
 
 def test(args):
     ''' livestock testing pipeline '''
+    # device = what you will use on this function
     device = torch.device(
         "cuda" if torch.cuda.is_available() and not args.force_cpu else "cpu"
     )
@@ -105,6 +107,8 @@ def test(args):
 
     # Load model
     model = load_vqvae(args)
+    # device: 1 concept của pytorch
+
     model.to(device)
 
     try:
@@ -122,10 +126,22 @@ def test(args):
 
     rec_loss = []
 
+    output_csv = {
+        'local_img_name': [],
+        'global_img_name': [],
+        'local_img_path': [],
+        'rec_loss': []
+    }
+
+    
+
+    # t
     pbar = tqdm(test_dataloader)
-    for imgs_loc, imgs_glo, _ in pbar:
+    for imgs_loc, imgs_glo, _, imgs_loc_path, imgs_glo_name, imgs_loc_name in pbar:
         imgs_loc = imgs_loc.to(device)
         imgs_glo = imgs_glo.to(device)
+        
+
         # if args.dataset in ["livestock","mvtec","miad"]:
         #     # gt is a segmentation mask
         #     gt_np = gt[0].permute(1, 2, 0).cpu().numpy()[..., 0]
@@ -147,8 +163,13 @@ def test(args):
     
          
         rec_loss.append(torch.median(torch.from_numpy(amaps)))     
+        # bỏ data vào trong các trường của output_csv
+        output_csv['local_img_name'].append(imgs_loc_name)
+        output_csv["global_img_name"].append(imgs_glo_name)
+        output_csv["local_img_path"] .append(imgs_loc_path)
+        output_csv["rec_loss"].append(torch.median(torch.from_numpy(amaps)))
 
-        
+
         print(float("{:.2f}".format(rec_loss[-1])))
         m_rec = np.mean(rec_loss)
         print(m_rec)
@@ -172,7 +193,9 @@ def test(args):
     m_rec = np.mean(rec_loss)
     print("Mean rec loss on", args.category, args.defect, m_rec)
 
-    
+    # ra ngoài for loop thì in cái dataframe 
+    dataframe = pd.DataFrame(output_csv)
+    dataframe.to_csv('D:\source\GitHub\data\csv')
 
     return m_rec
 

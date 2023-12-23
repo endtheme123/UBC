@@ -374,7 +374,7 @@ class UBCTestPlotDataset(Dataset):
         img_glo = Image.open(self.global_img_files[index])
         # gt = Image.open(self.gt_files[index])
 
-        return self.transform(img_loc), self.transform(img_glo), 0
+        return self.transform(img_loc), self.transform(img_glo), 0, self.img_files[index], os.path.basename(self.img_files[index]).split("_")[0] , os.path.basename(self.img_files[index])
 
 class UBCTrainDataset(Dataset):
     def __init__(self, img_size, fake_dataset_size, all_in = False):
