@@ -1,3 +1,8 @@
+# các giá trị cần output
+# identity của ảnh (local + global) AND/OR đường dẫn
+# Tên ảnh 
+# Giá trị loss (MAD)
+
 import os
 import time
 import argparse

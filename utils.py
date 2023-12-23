@@ -11,6 +11,8 @@ from chokhac import UBC
 import time
 import argparse
 
+# parse arguments to other functions
+# contain default values if needed
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--params_id", default=100)
@@ -48,6 +50,9 @@ def parse_args():
 
     return parser.parse_args()
 
+# load VAE models
+# 3 types: VAE, VAE-GRF, VQ-VAE
+# TODO: Define UBC model
 def load_vqvae(args):
     if args.model == "vae":
         print(args.nb_channels)
@@ -88,6 +93,7 @@ def load_vqvae(args):
                 beta=args.beta,
             )
     return model
+
 
 def load_model_parameters(model, file_name, dir1, dir2, device):
     print(f"Trying to load: {file_name}")
@@ -199,8 +205,6 @@ def update_loss_dict(ld_old, ld_new):
             ld_old[k] = v
     return ld_old
 
-
-
 def print_loss_logs(f_name, out_dir, loss_dict, epoch, exp_name):
     if epoch == 0:
         with open(f_name, "w") as f:
@@ -225,7 +229,6 @@ def print_loss_logs(f_name, out_dir, loss_dict, epoch, exp_name):
         fig.savefig(os.path.join(out_dir,exp_name,
             f"{exp_name}_loss_{epoch + 1}.png"))
         plt.close(fig) 
-
 
 def print_AUCROC_logs(f_name, out_dir, loss_dict, epoch, exp_name):
     if epoch == 0:
