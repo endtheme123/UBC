@@ -296,7 +296,7 @@ def test_on_train(args, model):
 
     m_rec_loss = np.mean(rec_loss)
     print("Mean rec loss on", args.category, args.defect, m_rec_loss)
-
+    
     
 
     return m_rec_loss
