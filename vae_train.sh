@@ -1,16 +1,16 @@
 #!/bin/bash
 
 python vae_train.py\
-    --exp=test_HGSC_UBC_vae_1_200\
+    --exp=test_HGSC_UBC_vae_2nd_edition\
     --dataset=UBC\
     --category=wood\
     --lr=1e-4\
     --num_epochs=100\
-    --img_size=256\
-    --batch_size=16\
+    --img_size=224\
+    --batch_size=8\
     --batch_size_test=8\
-    --latent_img_size=32\
-    --z_dim=256\
+    --latent_img_size=14\
+    --z_dim=192\
     --beta=1\
     --nb_channels=3\
     --model=UBC\

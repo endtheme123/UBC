@@ -1,7 +1,8 @@
 import os
 import numpy as np
 import itertools
-path = "F:/UBC-OCEAN/train_images/CC"
+path = "F:/UBC-OCEAN/train_images/"
+path = 
 img_fol_dir = list(os.path.join(path, img_fol) for img_fol in os.listdir(path))
 img_path = list(
                             np.random.choice(
