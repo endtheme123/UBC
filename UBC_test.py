@@ -136,9 +136,9 @@ def test(args):
         if args.dataset == "UBC":
             score, ssim_map = dissimilarity_func(x_rec[0], imgs_loc[0], 11)
 
+        # Structural Similarity Index Measure (SSIM)
         amaps = ((ssim_map - np.amin(ssim_map)) / (np.amax(ssim_map)
         - np.amin(ssim_map)))
-
         x_rec, _ = model(imgs_loc, imgs_glo)
         x_rec = model.mean_from_lambda(x_rec)
 
@@ -155,8 +155,8 @@ def test(args):
         # MAD metric
         amaps = mad
             
-            
-
+    
+         
         rec_loss.append(torch.median(torch.from_numpy(amaps)))     
 
         
@@ -184,6 +184,8 @@ def test(args):
 
     m_rec = np.mean(rec_loss)
     print("Mean rec loss on", args.category, args.defect, m_rec)
+
+    
 
     return m_rec
 
@@ -279,8 +281,23 @@ def test_on_train(args, model):
         img_to_save.save(path_to_save + 'final_amap.png')
 
 
+        mad = torch.mean(torch.abs(model.mu - torch.mean(model.mu,
+            dim=(0,1))), dim=(0,1))
+
+        mad = mad.detach().cpu().numpy()
+
+        mad = ((mad - np.amin(mad)) / (np.amax(mad)
+            - np.amin(mad)))
+
+        mad = mad.repeat(8, axis=0).repeat(8, axis=1)
+
+        # MAD metric
+        amaps = mad
+
     m_rec_loss = np.mean(rec_loss)
     print("Mean rec loss on", args.category, args.defect, m_rec_loss)
+    
+    
 
     return m_rec_loss
 

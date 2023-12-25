@@ -135,7 +135,7 @@ class UBC(nn.Module):
 
     def encoder(self, x, x_glb):
         x = self.dino(x)
-        print(x.shape)
+        # print(x.shape)
         # x = self.dino_export_loc(x)
         # x = x.view(4, 384,14,14)
         x_glb = self.dino(x_glb)
@@ -168,20 +168,20 @@ class UBC(nn.Module):
         logvar = torch.unsqueeze(logvar, -1)
         logvar = torch.unsqueeze(logvar, -1)
         
+        self.mu = mu
+        self.logvar = logvar
         z = self.reparameterize(mu, logvar)
         # print(z.shape)
         
-        self.mu = mu
         # print(mu.shape)
-        self.logvar = logvar
         # print(self.decoder(z).shape)
         return self.decoder(z), (mu, logvar)
 
     def xent_continuous_ber(self, recon_x, x, pixelwise=False):
         ''' p(x_i|z_i) a continuous bernoulli '''
         eps = 1e-6
-        print(recon_x.shape)
-        print(x.shape)
+        # print(recon_x.shape)
+        # print(x.shape)
         recon = transforms.Resize(size=(256, 256))
         def log_norm_const(x):
             # numerically stable computation
