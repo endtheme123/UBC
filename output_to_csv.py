@@ -158,28 +158,16 @@ def test(args):
             score, ssim_map = dissimilarity_func(x_rec[0], imgs_loc[0], 11)
 
         # Structural Similarity Index Measure (SSIM)
-        ssim_map = ((ssim_map - np.amin(ssim_map)) / (np.amax(ssim_map)
+        amaps = ((ssim_map - np.amin(ssim_map)) / (np.amax(ssim_map)
         - np.amin(ssim_map)))
-
-        x_rec, _ = model(imgs_loc, imgs_glo)
-        x_rec = model.mean_from_lambda(x_rec)
-
-        mad = torch.mean(torch.abs(model.mu - torch.mean(model.mu,
-            dim=(0,1))), dim=(0,1))
-        mad = mad.detach().cpu().numpy()
-
-       
-        mad = mad.repeat(8, axis=0).repeat(8, axis=1)
-
-     
     
          
         rec_loss.append(torch.median(torch.from_numpy(amaps)))     
         # bỏ data vào trong các trường của output_csv
-        output_csv['local_img_name'].append(''.join(imgs_loc_name))
-        output_csv["global_img_name"].append(''.join(imgs_glo_name))
-        output_csv["local_img_path"].append(''.join(imgs_loc_path))
-        output_csv["rec_loss"].append(torch.median(torch.from_numpy(amaps)).item())
+        output_csv['local_img_name'].append(imgs_loc_name)
+        output_csv["global_img_name"].append(imgs_glo_name)
+        output_csv["local_img_path"] .append(imgs_loc_path)
+        output_csv["rec_loss"].append(torch.median(torch.from_numpy(amaps)))
 
 
         print(float("{:.2f}".format(rec_loss[-1])))
@@ -207,7 +195,7 @@ def test(args):
 
     # ra ngoài for loop thì in cái dataframe 
     dataframe = pd.DataFrame(output_csv)
-    dataframe.to_csv("./csv/"+args.exp+ "_test_"+ args.category + ".csv")
+    dataframe.to_csv('D:\source\GitHub\data\csv')
 
     return m_rec
 
