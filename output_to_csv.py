@@ -146,9 +146,7 @@ def test(args):
         #     # gt is a segmentation mask
         #     gt_np = gt[0].permute(1, 2, 0).cpu().numpy()[..., 0]
         #     gt_np = (gt_np - np.amin(gt_np)) / (np.amax(gt_np) - np.amin(gt_np))
-
-        
-            
+   
 
         with torch.no_grad():
             x_rec = get_error_pixel_wise(model, imgs_loc, imgs_glo)
@@ -157,17 +155,25 @@ def test(args):
         if args.dataset == "UBC":
             score, ssim_map = dissimilarity_func(x_rec[0], imgs_loc[0], 11)
 
-        # Structural Similarity Index Measure (SSIM)
-        amaps = ((ssim_map - np.amin(ssim_map)) / (np.amax(ssim_map)
-        - np.amin(ssim_map)))
-    
+
+        mad = torch.mean(torch.abs(model.mu - torch.mean(model.mu,
+            dim=(0,1))), dim=(0,1))
+
+        mad = mad.detach().cpu().numpy()
+
+        mad = ((mad - np.amin(mad)) / (np.amax(mad)
+            - np.amin(mad)))
+
+        # mad = mad.repeat(8, axis=0).repeat(8, axis=1)
          
         rec_loss.append(torch.median(torch.from_numpy(amaps)))     
         # bỏ data vào trong các trường của output_csv
         output_csv['local_img_name'].append(imgs_loc_name)
         output_csv["global_img_name"].append(imgs_glo_name)
         output_csv["local_img_path"] .append(imgs_loc_path)
-        output_csv["rec_loss"].append(torch.median(torch.from_numpy(amaps)))
+        # output_csv["rec_loss"].append(torch.median(torch.from_numpy(amaps)))
+        output_csv["ssim_score"].append(torch.median(torch.from_numpy(ssim_map)))
+        output_csv["mad_score"].append(torch.median(torch.from_numpy(mad)))
 
 
         print(float("{:.2f}".format(rec_loss[-1])))
